@@ -1,0 +1,27 @@
+{
+	"compilerOptions": {
+		"target": "esnext",
+		"module": "ES2020",
+		"moduleResolution": "node",
+		"noEmit": false,
+		"rootDir": "app/ts",
+		"outDir": "app/js",
+		"sourceMap": true,
+		"inlineSources": true,
+		"declaration": true,
+		"declarationMap": true,
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"noImplicitThis": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "preact",
+		"lib": ["es2019", "esnext.bigint", "dom"],
+		"plugins": [ { "transform": "@zoltu/typescript-transformer-append-js-extension/output/index.js", "after": true, } ]
+	},
+	"include": [
+		"./app/ts/**/*.ts",
+		"./app/ts/**/*.tsx",
+	],
+}
