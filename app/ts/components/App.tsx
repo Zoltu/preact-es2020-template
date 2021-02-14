@@ -12,7 +12,7 @@ export function App() {
 	}
 
 	async function updateGreetingWithFailure(): Promise<'Hello'> {
-		await sleep(1000)
+		await sleep(100)
 		throw new Error(`Uh oh, you broke it!`)
 	}
 
@@ -33,7 +33,7 @@ export function App() {
 		case 'inactive':
 			return <main>Waiting for someone to click a button. <GoodButton/><BadButton/></main>
 		case 'pending':
-			return <main><Spinner/></main>
+			return <main><Spinner/> Don't click the bad button! <BadButton/></main>
 		case 'rejected':
 			return <main>You broke it!  I guess you need to start over, try again: <ResetButton/></main>
 		case 'resolved':
