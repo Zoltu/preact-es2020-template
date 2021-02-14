@@ -1,12 +1,44 @@
-export interface AppModel {
-	readonly cycleGreeting: () => void
-	greeting: string
-	subject: string
+import { useAsyncState } from '../library/preact-utilities'
+import { Spinner } from './Spinner'
+
+async function sleep(milliseconds: number) {
+	await new Promise(resolve => setTimeout(resolve, milliseconds))
 }
 
-export function App(model: Readonly<AppModel>) {
-	return <main>
-		<div>{model.greeting} {model.subject}</div>
-		<button onClick={model.cycleGreeting}>Change</button>
-	</main>
+export function App() {
+	async function updateGreeting() {
+		await sleep(1000)
+		return 'Hello' as const
+	}
+
+	async function updateGreetingWithFailure(): Promise<'Hello'> {
+		await sleep(1000)
+		throw new Error(`Uh oh, you broke it!`)
+	}
+
+	function GoodButton() {
+		return <button style={{ backgroundColor: 'lightgreen' }} onClick={() => queryGreeting(updateGreeting)}>Good Button</button>
+	}
+
+	function BadButton() {
+		return <button style={{ backgroundColor: 'coral' }} onClick={() => queryGreeting(updateGreetingWithFailure)}>Bad Button</button>
+	}
+
+	function ResetButton() {
+		return <button onClick={resetGreeting}>↻</button>
+	}
+
+	const [ greeting, queryGreeting, resetGreeting ] = useAsyncState<'Hello'>()
+	switch (greeting.state) {
+		case 'inactive':
+			return <main>Waiting for someone to click a button. <GoodButton/><BadButton/></main>
+		case 'pending':
+			return <main><Spinner/></main>
+		case 'rejected':
+			return <main>You broke it!  I guess you need to start over, try again: <ResetButton/></main>
+		case 'resolved':
+			return <main>
+				<div>{greeting.value} World! <ResetButton/></div>
+			</main>
+	}
 }

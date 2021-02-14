@@ -6,6 +6,7 @@ const dependencyPaths = [
 	{ packageName: 'es-module-shims', subfolderToVendor: 'es-module-shims/dist', entrypointFile: 'es-module-shims.min.js' },
 	{ packageName: 'preact', subfolderToVendor: 'preact/dist', entrypointFile: 'preact.module.js' },
 	{ packageName: 'preact/jsx-runtime', subfolderToVendor: 'preact/jsx-runtime/dist', entrypointFile: 'jsxRuntime.module.js' },
+	{ packageName: 'preact/hooks', subfolderToVendor: 'preact/hooks/dist', entrypointFile: 'hooks.module.js' },
 ]
 
 async function vendorDependencies() {

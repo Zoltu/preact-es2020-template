@@ -1,4 +1,7 @@
 {
+	"description": "",
+	"repository": {},
+	"license": "Unlicense",
 	"devDependencies": {
 		"@zoltu/typescript-transformer-append-js-extension": "1.0.1",
 		"ttypescript": "1.5.12",
