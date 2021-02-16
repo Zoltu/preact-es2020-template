@@ -16,18 +16,16 @@ export function useAsyncState<T>(resolver?: () => Promise<T>): [AsyncProperty<T>
 		return capture
 	}
 
-	async function activate(resolver: () => Promise<T>, skipPendingSet: boolean = false) {
+	async function activate(resolver: () => Promise<T>) {
 		const capture = getCaptureAndCancelOthers()
 		try {
-			if (!skipPendingSet) {
-				const pendingState = { state: 'pending' as const }
-				capture.setResult(pendingState)
-			}
+			const pendingState = { state: 'pending' as const }
+			capture.setResult(pendingState)
 			const resolvedValue = await resolver()
 			const resolvedState = { state: 'resolved' as const, value: resolvedValue }
 			capture.setResult(resolvedState)
 		} catch (unknownError: unknown) {
-			const error = unknownError instanceof Error ? unknownError : new Error(`Unknown error occurred.`)
+			const error = unknownError instanceof Error ? unknownError : typeof unknownError === 'string' ? new Error(unknownError) : new Error(`Unknown error occurred.\n${JSON.stringify(unknownError)}`)
 			const rejectedState = { state: 'rejected' as const, error }
 			capture.setResult(rejectedState)
 		}
@@ -37,10 +35,10 @@ export function useAsyncState<T>(resolver?: () => Promise<T>): [AsyncProperty<T>
 		getCaptureAndCancelOthers().setResult({ state: 'inactive' })
 	}
 
-	const [ result, setResult ] = (resolver === undefined)
-		? preactHooks.useState<AsyncProperty<T>>(() => ({ state: 'inactive' }))
-		: preactHooks.useState<AsyncProperty<T>>(() => { activate(resolver, true); return { state: 'pending' } })
-	const [ captureContainer ] = preactHooks.useState({previousCapture: { setResult }})
+	const [ captureContainer ] = preactHooks.useState<{previousCapture: { setResult: preactHooks.StateUpdater<AsyncProperty<T>>}}>({previousCapture: { setResult: () => {} }})
+	let firstRun = false
+	const [ result, setResult ] = preactHooks.useState<AsyncProperty<T>>(() => { firstRun = true; return { state: 'inactive' } })
+	if (firstRun && resolver !== undefined) activate(resolver)
 
 	return [ result, resolver => activate(resolver), reset ]
 }
