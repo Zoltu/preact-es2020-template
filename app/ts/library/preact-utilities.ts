@@ -5,7 +5,7 @@ export type Resolved<T> = { state: 'resolved', value: T }
 export type Rejected = { state: 'rejected', error: Error }
 export type AsyncProperty<T> = Inactive | Pending | Resolved<T> | Rejected
 
-export function useAsyncState<T>(resolver?: () => Promise<T>): [AsyncProperty<T>, (resolver: () => Promise<T>) => void, () => void] {
+export function useAsyncState<T>(initialResolver?: () => Promise<T>): [AsyncProperty<T>, (resolver: () => Promise<T>) => void, () => void] {
 	function getCaptureAndCancelOthers() {
 		// set the previously captured functions to be no-ops
 		captureContainer.previousCapture.setResult = () => {}
@@ -38,7 +38,7 @@ export function useAsyncState<T>(resolver?: () => Promise<T>): [AsyncProperty<T>
 	const [ captureContainer ] = preactHooks.useState<{previousCapture: { setResult: preactHooks.StateUpdater<AsyncProperty<T>>}}>({previousCapture: { setResult: () => {} }})
 	let firstRun = false
 	const [ result, setResult ] = preactHooks.useState<AsyncProperty<T>>(() => { firstRun = true; return { state: 'inactive' } })
-	if (firstRun && resolver !== undefined) activate(resolver)
+	if (firstRun && initialResolver !== undefined) activate(initialResolver)
 
 	return [ result, resolver => activate(resolver), reset ]
 }

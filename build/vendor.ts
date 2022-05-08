@@ -24,7 +24,7 @@ async function vendorDependencies() {
 	}, { imports: {} as Record<string, string> })
 	const importmapJson = JSON.stringify(importmap, undefined, '\t')
 		.replace(/^/mg, '\t\t')
-	const newIndexHtml = oldIndexHtml.replace(/<script type='importmap-shim'>[\s\S]*?<\/script>/m, `<script type='importmap-shim'>\n${importmapJson}\n\t</script>`)
+	const newIndexHtml = oldIndexHtml.replace(/<script type='importmap'>[\s\S]*?<\/script>/m, `<script type='importmap'>\n${importmapJson}\n\t</script>`)
 	await fs.writeFile(indexHtmlPath, newIndexHtml)
 }
 
