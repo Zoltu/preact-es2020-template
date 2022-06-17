@@ -1,7 +1,7 @@
 {
 	"compilerOptions": {
-		"target": "esnext",
-		"module": "commonjs",
+		"target": "ES2021",
+		"module": "ES2020",
 		"moduleResolution": "node",
 		"noEmit": true,
 		"rootDir": ".",
@@ -10,6 +10,12 @@
 		"noUnusedParameters": true,
 		"noImplicitReturns": true,
 		"noImplicitThis": true,
-		"lib": [ "es2020" ],
+		"lib": [ "ES2020" ],
+	},
+	"include": [
+		"./*.ts"
+	],
+	"ts-node": {
+		"esm": true,
 	}
 }

@@ -1,43 +1,45 @@
+import { sleep } from '../library/utilities'
 import { useAsyncState } from '../library/preact-utilities'
 import { Spinner } from './Spinner'
 
-async function sleep(milliseconds: number) {
-	await new Promise(resolve => setTimeout(resolve, milliseconds))
+export interface AppModel {
+	readonly cycleSubject: () => void
+	greeting: string
 }
 
-export function App() {
-	const [ greeting, queryGreeting, resetGreeting ] = useAsyncState<'Hello'>()
+export function App(model: AppModel) {
+	const [ subject, querySubject, resetSubject ] = useAsyncState<'World'>()
 
-	async function updateGreeting() {
+	async function updateSubject() {
 		await sleep(1000)
-		return 'Hello' as const
+		return 'World' as const
 	}
 
-	async function updateGreetingWithFailure(): Promise<'Hello'> {
+	async function updateSubjectWithFailure(): Promise<'World'> {
 		await sleep(100)
 		throw new Error(`Uh oh, you broke it!`)
 	}
 
 	function GoodButton() {
-		return <button style={{ backgroundColor: 'lightgreen' }} onClick={() => queryGreeting(updateGreeting)}>Good Button</button>
+		return <button style={{ backgroundColor: 'lightgreen' }} onClick={() => querySubject(updateSubject)}>Good Button</button>
 	}
 
 	function BadButton() {
-		return <button style={{ backgroundColor: 'coral' }} onClick={() => queryGreeting(updateGreetingWithFailure)}>Bad Button</button>
+		return <button style={{ backgroundColor: 'coral' }} onClick={() => querySubject(updateSubjectWithFailure)}>Bad Button</button>
 	}
 
 	function ResetButton() {
-		return <button onClick={resetGreeting}>↻</button>
+		return <button onClick={resetSubject}>↻</button>
 	}
 
-	switch (greeting.state) {
+	switch (subject.state) {
 		case 'inactive':
 			return <main>Waiting for someone to click a button. <GoodButton/><BadButton/></main>
 		case 'pending':
 			return <main><Spinner/> Don't click the bad button! <BadButton/></main>
 		case 'rejected':
-			return <main>{greeting.error.message} I guess you need to start over, try again: <ResetButton/></main>
+			return <main>{subject.error.message} I guess you need to start over, try again: <ResetButton/></main>
 		case 'resolved':
-			return <main>{greeting.value} World! <ResetButton/></main>
+			return <main><button onClick={model.cycleSubject}>{model.greeting}</button> {subject.value}! <ResetButton/></main>
 	}
 }

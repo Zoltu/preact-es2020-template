@@ -1,22 +1,25 @@
 import * as path from 'path'
+import * as url from 'url';
 import { promises as fs } from 'fs'
 import { recursiveDirectoryCopy } from '@zoltu/file-copier'
 
+const directoryOfThisFile = path.dirname(url.fileURLToPath(import.meta.url))
+
 const dependencyPaths = [
-	{ packageName: 'es-module-shims', subfolderToVendor: 'es-module-shims/dist', entrypointFile: 'es-module-shims.min.js' },
-	{ packageName: 'preact', subfolderToVendor: 'preact/dist', entrypointFile: 'preact.module.js' },
-	{ packageName: 'preact/jsx-runtime', subfolderToVendor: 'preact/jsx-runtime/dist', entrypointFile: 'jsxRuntime.module.js' },
-	{ packageName: 'preact/hooks', subfolderToVendor: 'preact/hooks/dist', entrypointFile: 'hooks.module.js' },
+	{ packageName: 'es-module-shims', subfolderToVendor: 'dist', entrypointFile: 'es-module-shims.js' },
+	{ packageName: 'preact', subfolderToVendor: 'dist', entrypointFile: 'preact.module.js' },
+	{ packageName: 'preact/jsx-runtime', subfolderToVendor: 'dist', entrypointFile: 'jsxRuntime.module.js' },
+	{ packageName: 'preact/hooks', subfolderToVendor: 'dist', entrypointFile: 'hooks.module.js' },
 ]
 
 async function vendorDependencies() {
 	for (const { packageName, subfolderToVendor } of dependencyPaths) {
-		const sourceDirectoryPath = path.join(__dirname, '..', 'node_modules', subfolderToVendor)
-		const destinationDirectoryPath = path.join(__dirname, '..', 'app', 'vendor', packageName)
-		await recursiveDirectoryCopy(sourceDirectoryPath, destinationDirectoryPath, undefined, fixSourceMap)
+		const sourceDirectoryPath = path.join(directoryOfThisFile, '..', 'node_modules', packageName, subfolderToVendor)
+		const destinationDirectoryPath = path.join(directoryOfThisFile, '..', 'app', 'vendor', packageName)
+		await recursiveDirectoryCopy(sourceDirectoryPath, destinationDirectoryPath, undefined, rewriteSourceMapSourcePath.bind(undefined, packageName))
 	}
 
-	const indexHtmlPath = path.join(__dirname, '..', 'app', 'index.html')
+	const indexHtmlPath = path.join(directoryOfThisFile, '..', 'app', 'index.html')
 	const oldIndexHtml = await fs.readFile(indexHtmlPath, 'utf8')
 	const importmap = dependencyPaths.reduce((importmap, { packageName, entrypointFile }) => {
 		importmap.imports[packageName] = `./${path.join('.', 'vendor', packageName, entrypointFile).replace(/\\/g, '/')}`
@@ -28,25 +31,21 @@ async function vendorDependencies() {
 	await fs.writeFile(indexHtmlPath, newIndexHtml)
 }
 
-// https://bugs.chromium.org/p/chromium/issues/detail?id=979000
-async function fixSourceMap(filePath: string) {
-	const fileExtension = path.extname(filePath)
+// rewrite the source paths in sourcemap files so they show up in the debugger in a reasonable location and if two source maps refer to the same (relative) path, we end up with them distinguished in the browser debugger
+async function rewriteSourceMapSourcePath(packageName: string, sourcePath: string, destinationPath: string) {
+	const fileExtension = path.extname(sourcePath)
 	if (fileExtension !== '.map') return
-	const fileDirectoryName = path.basename(path.dirname(path.dirname(filePath)))
-	const fileName = path.parse(path.parse(filePath).name).name
-	const fileContents = JSON.parse(await fs.readFile(filePath, 'utf-8')) as { sources: Array<string> }
+	const fileContents = JSON.parse(await fs.readFile(sourcePath, 'utf-8')) as { sources: Array<string> }
 	for (let i = 0; i < fileContents.sources.length; ++i) {
-		fileContents.sources[i] = (fileName === 'index')
-			? `./${fileDirectoryName}.ts`
-			: `./${fileName}.ts`
+		// we want to ensure all source files show up in the appropriate directory and don't leak out of our directory tree, so we strip leading '../' references
+		const sourcePath = fileContents.sources[i].replace(/^(?:.\/)*/, '').replace(/^(?:..\/)*/, '')
+		fileContents.sources[i] = ['dependencies://dependencies', packageName, sourcePath].join('/')
 	}
-	await fs.writeFile(filePath, JSON.stringify(fileContents))
+	await fs.writeFile(destinationPath, JSON.stringify(fileContents))
 }
 
-if (require.main === module) {
-	vendorDependencies().catch(error => {
-		console.error(error.message)
-		console.error(error)
-		process.exit(1)
-	})
-}
+vendorDependencies().catch(error => {
+	console.error(error)
+	debugger
+	process.exit(1)
+})

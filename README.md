@@ -14,7 +14,8 @@ npm run build
 
 ## Watch
 ```bash
-npm run watch
+# Removed/broken until https://github.com/cevek/ttypescript/issues/121 is fixed
+# npx --no-install ttsc --watch
 ```
 
 ## Serve
