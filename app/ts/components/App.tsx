@@ -1,6 +1,6 @@
-import { sleep } from '../library/utilities'
-import { useAsyncState } from '../library/preact-utilities'
-import { Spinner } from './Spinner'
+import { sleep } from '../library/utilities.js'
+import { useAsyncState } from '../library/preact-utilities.js'
+import { Spinner } from './Spinner.js'
 
 export interface AppModel {
 	readonly cycleSubject: () => void

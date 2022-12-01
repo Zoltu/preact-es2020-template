@@ -17,7 +17,6 @@
 		"jsx": "react-jsx",
 		"jsxImportSource": "preact",
 		"lib": ["ES2021", "DOM"],
-		"plugins": [ { "transform": "@zoltu/typescript-transformer-append-js-extension/output/index.js", "after": true, } ]
 	},
 	"include": [
 		"./app/ts/**/*.ts",
