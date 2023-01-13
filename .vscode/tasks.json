@@ -9,7 +9,7 @@
 			],
 			"group": "build",
 			"label": "npm: watch",
-			"detail": "ttsc --watch",
+			"detail": "tsc --watch",
 			"isBackground": true
 		},
 		{
