@@ -1,14 +1,15 @@
+import { ReadonlySignal } from '@preact/signals'
 import { sleep } from '../library/utilities.js'
 import { useAsyncState } from '../library/preact-utilities.js'
 import { Spinner } from './Spinner.js'
 
 export interface AppModel {
-	readonly cycleSubject: () => void
-	greeting: string
+	readonly greeting: ReadonlySignal<string>
+	readonly cycleGreeting: () => void
 }
 
 export function App(model: AppModel) {
-	const [ subject, querySubject, resetSubject ] = useAsyncState<'World'>()
+	const { value: subject, waitFor: waitForSubject, reset: resetSubject } = useAsyncState<'World'>()
 
 	async function updateSubject() {
 		await sleep(1000)
@@ -21,25 +22,25 @@ export function App(model: AppModel) {
 	}
 
 	function GoodButton() {
-		return <button style={{ backgroundColor: 'lightgreen' }} onClick={() => querySubject(updateSubject)}>Good Button</button>
+		return <button style={{ backgroundColor: 'lightgreen' }} onClick={() => waitForSubject(updateSubject)}>Good Button</button>
 	}
 
 	function BadButton() {
-		return <button style={{ backgroundColor: 'coral' }} onClick={() => querySubject(updateSubjectWithFailure)}>Bad Button</button>
+		return <button style={{ backgroundColor: 'coral' }} onClick={() => waitForSubject(updateSubjectWithFailure)}>Bad Button</button>
 	}
 
 	function ResetButton() {
 		return <button onClick={resetSubject}>↻</button>
 	}
 
-	switch (subject.state) {
+	switch (subject.value.state) {
 		case 'inactive':
 			return <main>Waiting for someone to click a button. <GoodButton/><BadButton/></main>
 		case 'pending':
 			return <main><Spinner/> Don't click the bad button! <BadButton/></main>
 		case 'rejected':
-			return <main>{subject.error.message} I guess you need to start over, try again: <ResetButton/></main>
+			return <main>{subject.value.error.message} I guess you need to start over, try again: <ResetButton/></main>
 		case 'resolved':
-			return <main><button onClick={model.cycleSubject}>{model.greeting}</button> {subject.value}! <ResetButton/></main>
+			return <main><button onClick={model.cycleGreeting}>{model.greeting}</button> {subject.value.value}! <ResetButton/></main>
 	}
 }

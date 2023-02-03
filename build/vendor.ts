@@ -5,23 +5,25 @@ import { recursiveDirectoryCopy } from '@zoltu/file-copier'
 
 const directoryOfThisFile = path.dirname(url.fileURLToPath(import.meta.url))
 
-const dependencyPaths = [
+const dependencyPaths: { packageName: string, packageToVendor?: string, subfolderToVendor: string, entrypointFile: string }[] = [
 	{ packageName: 'preact', subfolderToVendor: 'dist', entrypointFile: 'preact.module.js' },
 	{ packageName: 'preact/jsx-runtime', subfolderToVendor: 'dist', entrypointFile: 'jsxRuntime.module.js' },
 	{ packageName: 'preact/hooks', subfolderToVendor: 'dist', entrypointFile: 'hooks.module.js' },
+	{ packageName: '@preact/signals', subfolderToVendor: 'dist', entrypointFile: 'signals.module.js' },
+	{ packageName: '@preact/signals-core', subfolderToVendor: 'dist', entrypointFile: 'signals-core.module.js' },
 ]
 
 async function vendorDependencies() {
-	for (const { packageName, subfolderToVendor } of dependencyPaths) {
-		const sourceDirectoryPath = path.join(directoryOfThisFile, '..', 'node_modules', packageName, subfolderToVendor)
-		const destinationDirectoryPath = path.join(directoryOfThisFile, '..', 'app', 'vendor', packageName)
+	for (const { packageName, packageToVendor, subfolderToVendor } of dependencyPaths) {
+		const sourceDirectoryPath = path.join(directoryOfThisFile, '..', 'node_modules', packageToVendor || packageName, subfolderToVendor)
+		const destinationDirectoryPath = path.join(directoryOfThisFile, '..', 'app', 'vendor', packageToVendor || packageName)
 		await recursiveDirectoryCopy(sourceDirectoryPath, destinationDirectoryPath, undefined, rewriteSourceMapSourcePath.bind(undefined, packageName))
 	}
 
 	const indexHtmlPath = path.join(directoryOfThisFile, '..', 'app', 'index.html')
 	const oldIndexHtml = await fs.readFile(indexHtmlPath, 'utf8')
-	const importmap = dependencyPaths.reduce((importmap, { packageName, entrypointFile }) => {
-		importmap.imports[packageName] = `./${path.join('.', 'vendor', packageName, entrypointFile).replace(/\\/g, '/')}`
+	const importmap = dependencyPaths.reduce((importmap, { packageName, packageToVendor, entrypointFile }) => {
+		importmap.imports[packageName] = `./${path.join('.', 'vendor', packageToVendor || packageName, entrypointFile).replace(/\\/g, '/')}`
 		return importmap
 	}, { imports: {} as Record<string, string> })
 	const importmapJson = JSON.stringify(importmap, undefined, '\t')
