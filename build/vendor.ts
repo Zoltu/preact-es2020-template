@@ -1,7 +1,7 @@
 import * as path from 'path'
 import * as url from 'url';
 import { promises as fs } from 'fs'
-import { recursiveDirectoryCopy } from '@zoltu/file-copier'
+import { FileType, recursiveDirectoryCopy } from '@zoltu/file-copier'
 
 const directoryOfThisFile = path.dirname(url.fileURLToPath(import.meta.url))
 
@@ -14,10 +14,19 @@ const dependencyPaths: { packageName: string, packageToVendor?: string, subfolde
 ]
 
 async function vendorDependencies() {
+	async function inclusionPredicate(path: string, fileType: FileType) {
+		if (path.endsWith('.js')) return true
+		if (path.endsWith('.ts')) return true
+		if (path.endsWith('.map')) return true
+		if (path.endsWith('.git') || path.endsWith('.git/') || path.endsWith('.git\\')) return false
+		if (path.endsWith('node_modules') || path.endsWith('node_modules/') || path.endsWith('node_modules\\')) return false
+		if (fileType === 'directory') return true
+		return false
+	}
 	for (const { packageName, packageToVendor, subfolderToVendor } of dependencyPaths) {
 		const sourceDirectoryPath = path.join(directoryOfThisFile, '..', 'node_modules', packageToVendor || packageName, subfolderToVendor)
 		const destinationDirectoryPath = path.join(directoryOfThisFile, '..', 'app', 'vendor', packageToVendor || packageName)
-		await recursiveDirectoryCopy(sourceDirectoryPath, destinationDirectoryPath, undefined, rewriteSourceMapSourcePath.bind(undefined, packageName))
+		await recursiveDirectoryCopy(sourceDirectoryPath, destinationDirectoryPath, inclusionPredicate, rewriteSourceMapSourcePath.bind(undefined, packageName))
 	}
 
 	const indexHtmlPath = path.join(directoryOfThisFile, '..', 'app', 'index.html')
