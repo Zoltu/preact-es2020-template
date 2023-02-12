@@ -9,10 +9,10 @@ export type AsyncState<T> = { value: Signal<AsyncProperty<T>>, waitFor: (resolve
 export function useAsyncState<T>(): AsyncState<T> {
 	function getCaptureAndCancelOthers() {
 		// delete previously captured signal so any pending async work will no-op when they resolve
-		delete captureContainer.value.result
+		delete captureContainer.peek().result
 		// capture the signal in a new object so we can delete it later if it is interrupted
 		captureContainer.value = { result }
-		return captureContainer.value
+		return captureContainer.peek()
 	}
 
 	async function activate(resolver: () => Promise<T>) {

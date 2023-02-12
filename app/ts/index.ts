@@ -4,10 +4,10 @@ import { App, AppModel } from './components/App.js'
 
 // create the root model for our app
 const greeting = new Signal('Hello')
-const rootModel: AppModel = {
+const rootModel = {
 	greeting: greeting,
-	cycleGreeting: () => greeting.value = (rootModel.greeting.peek() === 'Hello') ? 'nuqneH' : 'Hello',
-}
+	cycleGreeting: () => greeting.value = (greeting.peek() === 'Hello') ? 'nuqneH' : 'Hello',
+} satisfies AppModel
 
 // put the root model on the window for debugging convenience
 declare global { interface Window { rootModel: AppModel } }
