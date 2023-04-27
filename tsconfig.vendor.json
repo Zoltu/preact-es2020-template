@@ -3,12 +3,9 @@
 		"target": "ES2022",
 		"module": "ES2022",
 		"moduleResolution": "node16",
-		"rootDir": "app/ts",
-		"outDir": "app/js",
-		"sourceMap": true,
-		"inlineSources": true,
-		"declaration": true,
-		"declarationMap": true,
+		"rootDir": "./build",
+		"inlineSourceMap": true,
+		"declaration": false,
 
 		"strict": true,
 		"allowUnusedLabels": false,
@@ -22,15 +19,11 @@
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 
-		"jsx": "react-jsx",
-		"jsxImportSource": "preact",
-		"lib": ["ES2022", "DOM"],
+		"lib": [ "ES2020" ],
 		"typeRoots": [ "./node_modules/@types" ],
-		// add any @types here, empty array instead of default to prevent @types/node from being picked up
-		"types": [],
+		"types": [ "node" ],
 	},
 	"include": [
-		"./app/ts/**/*.ts",
-		"./app/ts/**/*.tsx",
+		"./build/*.mts"
 	],
 }

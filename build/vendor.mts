@@ -4,6 +4,9 @@ import { promises as fs } from 'fs'
 import { FileType, recursiveDirectoryCopy } from '@zoltu/file-copier'
 
 const directoryOfThisFile = path.dirname(url.fileURLToPath(import.meta.url))
+const VENDOR_OUTPUT_PATH = path.join(directoryOfThisFile, '..', 'app', 'vendor')
+const MODULES_ROOT_PATH = path.join(directoryOfThisFile, '..', 'node_modules')
+const INDEX_HTML_PATH = path.join(directoryOfThisFile, '..', 'app', 'index.html')
 
 const dependencyPaths: { packageName: string, packageToVendor?: string, subfolderToVendor: string, entrypointFile: string }[] = [
 	{ packageName: 'preact', subfolderToVendor: 'dist', entrypointFile: 'preact.module.js' },
@@ -24,13 +27,13 @@ async function vendorDependencies() {
 		return false
 	}
 	for (const { packageName, packageToVendor, subfolderToVendor } of dependencyPaths) {
-		const sourceDirectoryPath = path.join(directoryOfThisFile, '..', 'node_modules', packageToVendor || packageName, subfolderToVendor)
-		const destinationDirectoryPath = path.join(directoryOfThisFile, '..', 'app', 'vendor', packageToVendor || packageName)
+		const sourceDirectoryPath = path.join(MODULES_ROOT_PATH, packageToVendor || packageName, subfolderToVendor)
+		const destinationDirectoryPath = path.join(VENDOR_OUTPUT_PATH, packageToVendor || packageName)
 		await recursiveDirectoryCopy(sourceDirectoryPath, destinationDirectoryPath, inclusionPredicate, rewriteSourceMapSourcePath.bind(undefined, packageName))
 	}
 
-	const indexHtmlPath = path.join(directoryOfThisFile, '..', 'app', 'index.html')
-	const oldIndexHtml = await fs.readFile(indexHtmlPath, 'utf8')
+	
+	const oldIndexHtml = await fs.readFile(INDEX_HTML_PATH, 'utf8')
 	const importmap = dependencyPaths.reduce((importmap, { packageName, packageToVendor, entrypointFile }) => {
 		importmap.imports[packageName] = `./${path.join('.', 'vendor', packageToVendor || packageName, entrypointFile).replace(/\\/g, '/')}`
 		return importmap
@@ -38,7 +41,7 @@ async function vendorDependencies() {
 	const importmapJson = JSON.stringify(importmap, undefined, '\t')
 		.replace(/^/mg, '\t\t')
 	const newIndexHtml = oldIndexHtml.replace(/<script type='importmap'>[\s\S]*?<\/script>/m, `<script type='importmap'>\n${importmapJson}\n\t</script>`)
-	await fs.writeFile(indexHtmlPath, newIndexHtml)
+	await fs.writeFile(INDEX_HTML_PATH, newIndexHtml)
 }
 
 // rewrite the source paths in sourcemap files so they show up in the debugger in a reasonable location and if two source maps refer to the same (relative) path, we end up with them distinguished in the browser debugger
@@ -47,8 +50,10 @@ async function rewriteSourceMapSourcePath(packageName: string, sourcePath: strin
 	if (fileExtension !== '.map') return
 	const fileContents = JSON.parse(await fs.readFile(sourcePath, 'utf-8')) as { sources: Array<string> }
 	for (let i = 0; i < fileContents.sources.length; ++i) {
+		const source = fileContents.sources[i]
+		if (source === undefined) continue
 		// we want to ensure all source files show up in the appropriate directory and don't leak out of our directory tree, so we strip leading '../' references
-		const sourcePath = fileContents.sources[i].replace(/^(?:.\/)*/, '').replace(/^(?:..\/)*/, '')
+		const sourcePath = source.replace(/^(?:.\/)*/, '').replace(/^(?:..\/)*/, '')
 		fileContents.sources[i] = ['dependencies://dependencies', packageName, sourcePath].join('/')
 	}
 	await fs.writeFile(destinationPath, JSON.stringify(fileContents))

@@ -3,6 +3,8 @@
 	"repository": {},
 	"license": "Unlicense",
 	"devDependencies": {
+		"@types/node": "18.16.1",
+		"@zoltu/file-copier": "3.0.0",
 		"typescript": "5.0.4"
 	},
 	"dependencies": {
@@ -10,10 +12,10 @@
 		"preact": "10.13.2"
 	},
 	"scripts": {
-		"setup": "npm ci --ignore-scripts && tsc && cd build && npm ci --ignore-scripts && npm run vendor",
+		"setup": "npm ci --ignore-scripts && tsc && npm run vendor",
 		"build": "tsc",
 		"watch": "tsc --watch",
 		"serve": "npx http-server ./app",
-		"vendor": "cd build && npm run vendor"
+		"vendor": "tsc --project tsconfig.vendor.json && node --enable-source-maps ./build/vendor.mjs && node --input-type=module -e \"import { promises as fs } from 'fs'; await fs.rm('./build/vendor.mjs')\""
 	}
 }
