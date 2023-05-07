@@ -20,6 +20,8 @@ async function vendorDependencies() {
 	async function inclusionPredicate(path: string, fileType: FileType) {
 		if (path.endsWith('.js')) return true
 		if (path.endsWith('.ts')) return true
+		if (path.endsWith('.mjs')) return true
+		if (path.endsWith('.mts')) return true
 		if (path.endsWith('.map')) return true
 		if (path.endsWith('.git') || path.endsWith('.git/') || path.endsWith('.git\\')) return false
 		if (path.endsWith('node_modules') || path.endsWith('node_modules/') || path.endsWith('node_modules\\')) return false
@@ -35,7 +37,7 @@ async function vendorDependencies() {
 	
 	const oldIndexHtml = await fs.readFile(INDEX_HTML_PATH, 'utf8')
 	const importmap = dependencyPaths.reduce((importmap, { packageName, packageToVendor, entrypointFile }) => {
-		importmap.imports[packageName] = `./${path.join('.', 'vendor', packageToVendor || packageName, entrypointFile).replace(/\\/g, '/')}`
+		importmap.imports[packageName] = `./vendor/${packageToVendor || packageName}/${entrypointFile}`
 		return importmap
 	}, { imports: {} as Record<string, string> })
 	const importmapJson = JSON.stringify(importmap, undefined, '\t')
