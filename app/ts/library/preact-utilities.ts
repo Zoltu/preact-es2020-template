@@ -1,13 +1,21 @@
 import { Signal, batch, useSignal } from '@preact/signals'
 import { useMemo } from 'preact/hooks'
+import { ensureError } from './utilities.js'
+
 export type Inactive = { state: 'inactive' }
 export type Pending = { state: 'pending' }
 export type Resolved<T> = { state: 'resolved', value: T }
 export type Rejected = { state: 'rejected', error: Error }
 export type AsyncProperty<T> = Inactive | Pending | Resolved<T> | Rejected
 export type AsyncState<T> = { value: Signal<AsyncProperty<T>>, waitFor: (resolver: () => Promise<T>) => void, reset: () => void }
+export type Callbacks<T> = {
+	onInactive?: () => unknown
+	onPending?: () => unknown
+	onResolved?: (value?: T) => unknown
+	onRejected?: (error: Error) => unknown
+}
 
-export function useAsyncState<T>(): AsyncState<T> {
+export function useAsyncState<T>(callbacks?: Callbacks<T>): AsyncState<T> {
 	function getCaptureAndCancelOthers() {
 		// delete previously captured signal so any pending async work will no-op when they resolve
 		delete captureContainer.peek().result
@@ -27,13 +35,16 @@ export function useAsyncState<T>(): AsyncState<T> {
 		try {
 			const pendingState = { state: 'pending' as const }
 			setCapturedResult(pendingState)
+			callbacks?.onPending && callbacks.onPending()
 			const resolvedValue = await resolver()
 			const resolvedState = { state: 'resolved' as const, value: resolvedValue }
 			setCapturedResult(resolvedState)
+			callbacks?.onResolved && callbacks.onResolved(resolvedValue)
 		} catch (unknownError: unknown) {
-			const error = unknownError instanceof Error ? unknownError : typeof unknownError === 'string' ? new Error(unknownError) : new Error(`Unknown error occurred.\n${JSON.stringify(unknownError)}`)
+			const error = ensureError(unknownError)
 			const rejectedState = { state: 'rejected' as const, error }
 			setCapturedResult(rejectedState)
+			callbacks?.onRejected && callbacks.onRejected(error)
 		}
 	}
 
@@ -41,6 +52,7 @@ export function useAsyncState<T>(): AsyncState<T> {
 		const result = getCaptureAndCancelOthers().result
 		if (result === undefined) return
 		result.value = { state: 'inactive' }
+		callbacks?.onInactive && callbacks.onInactive()
 	}
 
 	const result = useSignal<AsyncProperty<T>>({ state: 'inactive' })
