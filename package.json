@@ -2,6 +2,7 @@
 	"description": "",
 	"repository": {},
 	"license": "Unlicense",
+	"type": "module",
 	"devDependencies": {
 		"@types/node": "20.10.6",
 		"@zoltu/file-copier": "3.0.0",
