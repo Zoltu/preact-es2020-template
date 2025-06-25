@@ -1,14 +1,13 @@
+// add support for stringifying bigints and Uint8Arrays; use jsonParse to deserialize JSON that was serialized this way
+;(BigInt.prototype as unknown as { toJSON: (this: bigint) => string }).toJSON = function()  { return `0x${this.toString(16)}n` }
+;(Uint8Array.prototype as unknown as { toJSON: (this: Uint8Array) => string }).toJSON = function()  { return `b'${Array.from(this).map(x => x.toString(16).padStart(2, '0')).join('')}'` }
+
 export async function sleep(milliseconds: number) {
 	await new Promise(resolve => setTimeout(resolve, milliseconds))
 }
 
-export function jsonStringify(value: unknown, space?: string | number | undefined): string {
-    return JSON.stringify(value, (_, value) => {
-		if (typeof value === 'bigint') return `0x${value.toString(16)}n`
-		if (value instanceof Uint8Array) return `b'${Array.from(value).map(x => x.toString(16).padStart(2, '0')).join('')}'`
-		// cast works around https://github.com/uhyo/better-typescript-lib/issues/36
-		return value as JSONValueF<unknown>
-    }, space)
+export function jsonStringify(value: unknown, space?: string | number | undefined) {
+    return JSON.stringify(value, undefined, space)
 }
 export function jsonParse(text: string): unknown {
 	return JSON.parse(text, (_key: string, value: unknown) => {
