@@ -17,7 +17,7 @@
 		"setup": "npm ci --ignore-scripts && tsc && npm run vendor",
 		"build": "tsc",
 		"watch": "tsc --watch",
-		"serve": "npx http-server ./app",
+		"serve": "node ./dev-server.mjs",
 		"vendor": "tsc --project tsconfig.vendor.json && node --enable-source-maps ./build/vendor.mjs && node --input-type=module -e \"import { promises as fs } from 'fs'; await fs.rm('./build/vendor.mjs')\""
 	}
 }
