@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		"target": "ES2022",
+		"target": "es2024",
 		"module": "Node16",
 		"moduleResolution": "Node16",
 		"rootDir": "app/ts",
@@ -24,7 +24,7 @@
 
 		"jsx": "react-jsx",
 		"jsxImportSource": "preact",
-		"lib": ["ES2022", "DOM"],
+		"lib": ["ES2024", "DOM"],
 		"typeRoots": [ "./node_modules/@types" ],
 		// add any @types here, empty array instead of default to prevent @types/node from being picked up
 		"types": [],
