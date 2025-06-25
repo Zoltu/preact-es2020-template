@@ -1,6 +1,6 @@
 import { ReadonlySignal } from '@preact/signals'
 import { sleep } from '../library/utilities.js'
-import { useAsyncState } from '../library/preact-utilities.js'
+import { asyncSwitch, useAsyncState } from '../library/preact-utilities.js'
 import { Spinner } from './Spinner.js'
 
 export interface AppModel {
@@ -33,14 +33,10 @@ export function App(model: AppModel) {
 		return <button onClick={resetSubject}>↻</button>
 	}
 
-	switch (subject.value.state) {
-		case 'inactive':
-			return <main>Waiting for someone to click a button. <GoodButton/><BadButton/></main>
-		case 'pending':
-			return <main><Spinner/> Don't click the bad button! <BadButton/></main>
-		case 'rejected':
-			return <main>{subject.value.error.message} I guess you need to start over, try again: <ResetButton/></main>
-		case 'resolved':
-			return <main><button onClick={model.cycleGreeting}>{model.greeting}</button> {subject.value.value}! <ResetButton/></main>
-	}
+	return asyncSwitch(subject.value, {
+		inactive: <main>Waiting for someone to click a button. <GoodButton/><BadButton/></main>,
+		pending: <main><Spinner/> Don't click the bad button! <BadButton/></main>,
+		rejected: error => <main>{error.message} I guess you need to start over, try again: <ResetButton/></main>,
+		resolved: value => <main><button onClick={model.cycleGreeting}>{model.greeting}</button> {value}! <ResetButton/></main>,
+	})
 }

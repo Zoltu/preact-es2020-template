@@ -1,4 +1,5 @@
 import { Signal, batch, useSignal } from '@preact/signals'
+import { VNode } from 'preact'
 import { useMemo } from 'preact/hooks'
 import { ensureError } from './utilities.js'
 
@@ -59,6 +60,21 @@ export function useAsyncState<T>(callbacks?: Callbacks<T>): AsyncState<T> {
 	const captureContainer = useSignal<{ result?: Signal<AsyncProperty<T>> }>({})
 
 	return { value: result, waitFor: resolver => activate(resolver), reset }
+}
+
+type Cases<T> = {
+	inactive: VNode<unknown> | (() => VNode<unknown>)
+	pending: VNode<unknown> | (() => VNode<unknown>)
+	rejected: VNode<unknown> | ((error: Error) => VNode<unknown>)
+	resolved: VNode<unknown> | ((value: T) => VNode<unknown>)
+}
+export function asyncSwitch<T>(value: AsyncProperty<T>, cases: Cases<T>) {
+	switch (value.state) {
+		case 'inactive': return typeof cases.inactive === 'function' ? cases.inactive() : cases.inactive
+		case 'pending': return typeof cases.pending === 'function' ? cases.pending() : cases.pending
+		case 'rejected': return typeof cases.rejected === 'function' ? cases.rejected(value.error) : cases.rejected
+		case 'resolved': return typeof cases.resolved === 'function' ? cases.resolved(value.value) : cases.resolved
+	}
 }
 
 export class OptionalSignal<T> extends Signal<Signal<T> | undefined> {
